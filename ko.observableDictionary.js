@@ -1,8 +1,19 @@
-﻿// Knockout Observable Dictionary
+// Knockout Observable Dictionary
 // (c) James Foster
 // License: MIT (http://www.opensource.org/licenses/mit-license.php)
 
-(function () {
+(function (factory) {
+    // CommonJS
+    if (typeof require === 'function' && typeof exports === 'object' && typeof module === 'object') {
+        factory(require('knockout'));
+        // AMD
+    } else if (typeof define === 'function' && define.amd) {
+        define(['knockout'], factory);
+        // Normal script tag
+    } else {
+        factory(window.ko);
+    }
+}(function (ko) {
     function DictionaryItem(key, value, dictionary) {
         var observableKey = new ko.observable(key);
 
@@ -12,7 +23,7 @@
             write: function (newKey) {
                 var current = observableKey();
 
-                if (current == newKey) return;
+                if (current === newKey) return;
 
                 // no two items are allowed to share the same key.
                 dictionary.remove(newKey);
@@ -28,11 +39,19 @@
         result.items = new ko.observableArray();
 
         result._wrappers = {};
-        result._keySelector = keySelector || function (value, key) { return key; };
-        result._valueSelector = valueSelector || function (value) { return value; };
+        result._keySelector = keySelector || function (value, key) {
+            return key;
+        };
+        result._valueSelector = valueSelector || function (value) {
+            return value;
+        };
 
-        if (typeof keySelector == 'string') result._keySelector = function (value) { return value[keySelector]; };
-        if (typeof valueSelector == 'string') result._valueSelector = function (value) { return value[valueSelector]; };
+        if (typeof keySelector === 'string') result._keySelector = function (value) {
+            return value[keySelector];
+        };
+        if (typeof valueSelector === 'string') result._valueSelector = function (value) {
+            return value[valueSelector];
+        };
 
         ko.utils.extend(result, ko.observableDictionary['fn']);
 
@@ -50,7 +69,7 @@
                     return item.key() === valueOrPredicate.key();
                 };
             }
-            else if (typeof valueOrPredicate != "function") {
+            else if (typeof valueOrPredicate !== "function") {
                 predicate = function (item) {
                     return item.key() === valueOrPredicate;
                 };
@@ -135,19 +154,19 @@
 
             var underlyingArray = this.items();
             for (var index = 0; index < underlyingArray.length; index++) {
-                if (underlyingArray[index].key() == key)
+                if (underlyingArray[index].key() === key)
                     return index;
             }
             return -1;
         },
 
         get: function (key, wrap) {
-            if (wrap == false)
+            if (wrap === false)
                 return getValue(key, this.items());
 
             var wrapper = this._wrappers[key];
 
-            if (wrapper == null) {
+            if (wrapper === undefined) {  // Not part of the hash table, generate new one
                 wrapper = this._wrappers[key] = new ko.computed({
                     read: function () {
                         var value = getValue(key, this.items());
@@ -172,13 +191,17 @@
         },
 
         keys: function () {
-            return ko.utils.arrayMap(this.items(), function (item) { return item.key(); });
+            return ko.utils.arrayMap(this.items(), function (item) {
+                return item.key();
+            });
         },
 
         values: function () {
-            return ko.utils.arrayMap(this.items(), function (item) { return item.value(); });
+            return ko.utils.arrayMap(this.items(), function (item) {
+                return item.value();
+            });
         },
-        
+
         removeAll: function () {
             this.items.removeAll();
         },
@@ -200,11 +223,11 @@
 
     function getValue(key, items) {
         var found = ko.utils.arrayFirst(items, function (item) {
-            return item.key() == key;
+            return item.key() === key;
         });
         return found ? found.value : null;
     }
-})();
+}));
 
 
 // Utility methods
@@ -219,6 +242,7 @@ function defaultComparison(a, b) {
     a = a.toString();
     b = b.toString();
 
-    return a == b ? 0 : (a < b ? -1 : 1);
+    return a === b ? 0 : (a < b ? -1 : 1);
 }
+
 // ---------------------------------------------
